@@ -61,7 +61,7 @@ Clone Repo:
 bash
 Copy
 Edit
-git clone https://github.com/yourusername/ExpenseCalculator.git
+git clone (https://github.com/shubhvishnoi17/Expenses-Calculator.git)
 Compile the code:
 
 bash
