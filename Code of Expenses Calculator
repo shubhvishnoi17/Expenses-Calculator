@@ -1,5 +1,7 @@
-import java.util.InputMismatchException;
-import java.util.Scanner;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 // Interface for abstraction
 interface ExpenseOperations {
@@ -8,7 +10,7 @@ interface ExpenseOperations {
     double calculateTotal();
 }
 
-// Parent class
+// User class
 class User {
     protected String name;
     protected int userID;
@@ -18,15 +20,9 @@ class User {
         this.name = name;
         this.userID = ++userCount;
     }
-
-    public void displayUserInfo() {
-        System.out.println("\n--- User Info ---");
-        System.out.println("Name: " + name);
-        System.out.println("User ID: " + userID);
-    }
 }
 
-// Class to store single expense – Encapsulation
+// ExpenseItem class
 class ExpenseItem {
     private String category;
     private double amount;
@@ -38,8 +34,8 @@ class ExpenseItem {
         this.date = date;
     }
 
-    public void displayExpense() {
-        System.out.println(category + " - ₹" + amount + " on " + date);
+    public String toString() {
+        return category + " - ₹" + amount + " on " + date;
     }
 
     public double getAmount() {
@@ -47,9 +43,9 @@ class ExpenseItem {
     }
 }
 
-// Child class implementing interface
+// Expense class
 class Expense extends User implements ExpenseOperations {
-    private ExpenseItem e1, e2, e3, e4, e5, e6, e7, e8, e9, e10;
+    private ExpenseItem[] items = new ExpenseItem[10];
     private int count = 0;
 
     public Expense(String name) {
@@ -57,134 +53,149 @@ class Expense extends User implements ExpenseOperations {
     }
 
     public void addExpense(String category, double amount, String date) {
-        if (amount <= 0 || category.isEmpty() || date.isEmpty()) {
-            System.out.println("Invalid expense data. Please try again.");
+        if (count >= 10) {
+            JOptionPane.showMessageDialog(null, "Limit reached! Only 10 expenses allowed.");
             return;
         }
-
-        ExpenseItem newExpense = new ExpenseItem(category, amount, date);
-        count++;
-
-        switch (count) {
-            case 1: e1 = newExpense; break;
-            case 2: e2 = newExpense; break;
-            case 3: e3 = newExpense; break;
-            case 4: e4 = newExpense; break;
-            case 5: e5 = newExpense; break;
-            case 6: e6 = newExpense; break;
-            case 7: e7 = newExpense; break;
-            case 8: e8 = newExpense; break;
-            case 9: e9 = newExpense; break;
-            case 10: e10 = newExpense; break;
-            default:
-                System.out.println("Limit reached! Maximum 10 expenses allowed.");
-                count--;
-                return;
-        }
-
-        System.out.println("Expense added successfully.");
+        items[count++] = new ExpenseItem(category, amount, date);
     }
 
-    public void viewExpenses() {
-        System.out.println("\n--- Expense List ---");
-        if (count == 0) {
-            System.out.println("No expenses recorded.");
-            return;
+    public void viewExpenses(JTextArea outputArea) {
+        outputArea.setText("🧾 Expense List:\n\n");
+        for (int i = 0; i < count; i++) {
+            outputArea.append((i + 1) + ". " + items[i].toString() + "\n");
         }
-
-        if (e1 != null) e1.displayExpense();
-        if (e2 != null) e2.displayExpense();
-        if (e3 != null) e3.displayExpense();
-        if (e4 != null) e4.displayExpense();
-        if (e5 != null) e5.displayExpense();
-        if (e6 != null) e6.displayExpense();
-        if (e7 != null) e7.displayExpense();
-        if (e8 != null) e8.displayExpense();
-        if (e9 != null) e9.displayExpense();
-        if (e10 != null) e10.displayExpense();
     }
+
+    public void viewExpenses() {} // Unused in GUI
 
     public double calculateTotal() {
         double total = 0;
-        if (e1 != null) total += e1.getAmount();
-        if (e2 != null) total += e2.getAmount();
-        if (e3 != null) total += e3.getAmount();
-        if (e4 != null) total += e4.getAmount();
-        if (e5 != null) total += e5.getAmount();
-        if (e6 != null) total += e6.getAmount();
-        if (e7 != null) total += e7.getAmount();
-        if (e8 != null) total += e8.getAmount();
-        if (e9 != null) total += e9.getAmount();
-        if (e10 != null) total += e10.getAmount();
+        for (int i = 0; i < count; i++) {
+            total += items[i].getAmount();
+        }
         return total;
     }
 }
 
-// Main class
-public class ExpenseCalculatorApp {
+// GUI Class
+public class ExpenseCalculatorGUI {
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Welcome to Expense Calculator!");
+        SwingUtilities.invokeLater(() -> {
+            new ExpenseCalculatorGUI().createGUI();
+        });
+    }
 
-        System.out.print("Enter your name: ");
-        String name = sc.nextLine().trim();
-        if (name.isEmpty()) {
-            System.out.println("Invalid name. Exiting.");
-            return;
-        }
+    private void createGUI() {
+        JFrame frame = new JFrame("💸 Expense Calculator");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(650, 700);
+        frame.setLayout(new BorderLayout());
+        frame.getContentPane().setBackground(new Color(240, 248, 255));
 
-        Expense expenseTracker = new Expense(name);
-        expenseTracker.displayUserInfo();
+        Font font = new Font("Arial", Font.BOLD, 16);
 
-        int choice = 0;
-        do {
-            System.out.println("\n---- Menu ----");
-            System.out.println("1. Add Expense");
-            System.out.println("2. View Expenses");
-            System.out.println("3. Calculate Total");
-            System.out.println("4. Exit");
-            System.out.print("Enter choice: ");
+        // Input Panel
+        JPanel inputPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+        inputPanel.setBorder(BorderFactory.createTitledBorder("Enter Expense Details"));
+        inputPanel.setBackground(new Color(220, 230, 241));
 
+        JTextField nameField = new JTextField();
+        JTextField categoryField = new JTextField();
+        JTextField amountField = new JTextField();
+        JTextField dateField = new JTextField();
+
+        nameField.setFont(font);
+        categoryField.setFont(font);
+        amountField.setFont(font);
+        dateField.setFont(font);
+
+        inputPanel.add(new JLabel("Your Name:")); inputPanel.add(nameField);
+        inputPanel.add(new JLabel("Category:")); inputPanel.add(categoryField);
+        inputPanel.add(new JLabel("Amount (₹):")); inputPanel.add(amountField);
+        inputPanel.add(new JLabel("Date (dd-mm-yyyy):")); inputPanel.add(dateField);
+
+        // Buttons
+        JButton addButton = new JButton("➕ Add Expense");
+        JButton viewButton = new JButton("📜 View Expenses");
+        JButton totalButton = new JButton("🧮 Calculate Total");
+
+        addButton.setBackground(new Color(59, 170, 106));
+        viewButton.setBackground(new Color(100, 149, 237));
+        totalButton.setBackground(new Color(255, 165, 0));
+
+        addButton.setForeground(Color.WHITE);
+        viewButton.setForeground(Color.WHITE);
+        totalButton.setForeground(Color.WHITE);
+
+        addButton.setFont(font);
+        viewButton.setFont(font);
+        totalButton.setFont(font);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(new Color(240, 248, 255));
+        buttonPanel.add(addButton);
+        buttonPanel.add(viewButton);
+        buttonPanel.add(totalButton);
+
+        // Output area
+        JTextArea outputArea = new JTextArea(12, 40);
+        outputArea.setEditable(false);
+        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        outputArea.setBackground(new Color(250, 250, 250));
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("📊 Output"));
+
+        frame.add(inputPanel, BorderLayout.NORTH);
+        frame.add(buttonPanel, BorderLayout.CENTER);
+        frame.add(scrollPane, BorderLayout.SOUTH);
+
+        final Expense[] expense = {null};
+
+        // Add Expense Logic
+        addButton.addActionListener(e -> {
             try {
-                choice = sc.nextInt();
-                sc.nextLine(); // consume newline
-
-                switch (choice) {
-                    case 1:
-                        System.out.print("Enter category: ");
-                        String category = sc.nextLine();
-                        System.out.print("Enter amount: ");
-                        double amount = sc.nextDouble();
-                        sc.nextLine();
-                        System.out.print("Enter date (dd-mm-yyyy): ");
-                        String date = sc.nextLine();
-                        expenseTracker.addExpense(category, amount, date);
-                        break;
-
-                    case 2:
-                        expenseTracker.viewExpenses();
-                        break;
-
-                    case 3:
-                        double total = expenseTracker.calculateTotal();
-                        System.out.println("Total Expenses: ₹" + total);
-                        break;
-
-                    case 4:
-                        System.out.println("Thank you for using Expense Calculator!");
-                        break;
-
-                    default:
-                        System.out.println("Invalid choice. Please select from 1-4.");
+                if (expense[0] == null) {
+                    String name = nameField.getText().trim();
+                    if (name.isEmpty()) throw new Exception("Name required!");
+                    expense[0] = new Expense(name);
                 }
+                String category = categoryField.getText().trim();
+                double amount = Double.parseDouble(amountField.getText().trim());
+                String date = dateField.getText().trim();
 
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid input. Please enter a valid number.");
-                sc.nextLine(); // clear buffer
+                if (category.isEmpty() || date.isEmpty() || amount <= 0)
+                    throw new Exception("Fill all fields properly!");
+
+                expense[0].addExpense(category, amount, date);
+                JOptionPane.showMessageDialog(frame, "✅ Expense added successfully!");
+                categoryField.setText(""); amountField.setText(""); dateField.setText("");
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "❌ Error: " + ex.getMessage());
             }
+        });
 
-        } while (choice != 4);
+        // View Expenses Logic
+        viewButton.addActionListener(e -> {
+            if (expense[0] != null) {
+                expense[0].viewExpenses(outputArea);
+            } else {
+                outputArea.setText("No expenses to show.");
+            }
+        });
 
-        sc.close();
+        // Calculate Total Logic
+        totalButton.addActionListener(e -> {
+            if (expense[0] != null) {
+                double total = expense[0].calculateTotal();
+                outputArea.setText("💰 Total Expenses: ₹" + total);
+            } else {
+                outputArea.setText("No expenses to calculate.");
+            }
+        });
+
+        frame.setVisible(true);
     }
 }
+
